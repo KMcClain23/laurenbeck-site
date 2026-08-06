@@ -107,15 +107,54 @@
     } catch (e) { return null; }
   })();
 
+  /* Coarse buckets only — a family name, never the user-agent string itself. */
+  var audience = (function () {
+    var ua = navigator.userAgent || "";
+    var d = navigator.userAgentData || null;
+
+    var os = "Other";
+    if (/Windows/i.test(ua)) os = "Windows";
+    else if (/Android/i.test(ua)) os = "Android";
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+    else if (/Mac OS X|Macintosh/i.test(ua)) os = "macOS";
+    else if (/CrOS/i.test(ua)) os = "ChromeOS";
+    else if (/Linux/i.test(ua)) os = "Linux";
+
+    var device;
+    if (d && typeof d.mobile === "boolean") device = d.mobile ? "Mobile" : "Desktop";
+    else device = /Mobi|Android|iPhone|iPod/i.test(ua) ? "Mobile" : "Desktop";
+    /* iPadOS reports a desktop UA, so fall back to touch + screen size. */
+    if (/iPad/i.test(ua) || (os === "macOS" && navigator.maxTouchPoints > 1)) device = "Tablet";
+    else if (device === "Mobile" && Math.min(screen.width, screen.height) >= 600) device = "Tablet";
+
+    return { os: os, device: device };
+  })();
+
   function track(event, label) {
     if (navigator.webdriver) return;           /* skip obvious automation */
+    var body = JSON.stringify({
+      event: event, label: label || null, session_id: session,
+      device: audience.device, os: audience.os
+    });
     try {
-      fetch(REST + "analytics_events", {
+      /* /api/track adds the country from Vercel's edge header. If the function
+         is unavailable, fall back to writing straight to Supabase so events are
+         still counted — just without a country. */
+      fetch("/api/track", {
         method: "POST",
-        headers: { apikey: cfg.key, Authorization: "Bearer " + cfg.key, "Content-Type": "application/json" },
-        body: JSON.stringify({ event: event, label: label || null, session_id: session }),
+        headers: { "Content-Type": "application/json" },
+        body: body,
         keepalive: true
-      }).catch(noop);
+      }).then(function (r) {
+        if (!r.ok && r.status !== 202) throw new Error("track " + r.status);
+      }).catch(function () {
+        fetch(REST + "analytics_events", {
+          method: "POST",
+          headers: { apikey: cfg.key, Authorization: "Bearer " + cfg.key, "Content-Type": "application/json" },
+          body: body,
+          keepalive: true
+        }).catch(noop);
+      });
     } catch (e) { /* analytics must never break the page */ }
   }
 

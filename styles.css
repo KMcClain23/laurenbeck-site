@@ -293,6 +293,7 @@ section{padding:clamp(3.5rem,8vw,6.5rem) 0}
 .adm-bar{fill:var(--teal);transition:fill .15s ease}
 .adm-bar:hover{fill:var(--magenta)}
 .adm-ranks{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;margin:1.2rem 0}
+.adm-ranks-3{grid-template-columns:repeat(3,1fr)}
 .adm-rank h4{font-family:var(--sans);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 .5rem}
 .adm-rank-row{display:grid;grid-template-columns:1fr 90px 42px;align-items:center;gap:.6rem;padding:.25rem 0}
 .adm-rank-label{font-size:.82rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -305,5 +306,5 @@ section{padding:clamp(3.5rem,8vw,6.5rem) 0}
 .adm-table td{font-variant-numeric:tabular-nums}
 @media (max-width:760px){
   .adm-tiles{grid-template-columns:repeat(2,1fr)}
-  .adm-ranks{grid-template-columns:1fr}
+  .adm-ranks,.adm-ranks-3{grid-template-columns:1fr}
 }

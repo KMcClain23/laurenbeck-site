@@ -290,6 +290,18 @@
 
   function nice(n) { return (n || 0).toLocaleString(); }
 
+  /* Two-letter codes are stored; the browser turns them into names, so there is
+     no country lookup table to ship or keep current. */
+  var regionNames = (function () {
+    try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch (e) { return null; }
+  })();
+
+  function countryName(code) {
+    if (!code || code === "Unknown") return "Unknown";
+    if (!regionNames || code.length !== 2) return code;
+    try { return regionNames.of(code.toUpperCase()) || code; } catch (e) { return code; }
+  }
+
   /* Bars are a single series, so one hue carries all of them and no legend is
      needed — the heading names the measure. Only the top corners are rounded so
      each bar stays anchored to the baseline. */
@@ -427,6 +439,19 @@
       h("div", { class: "adm-ranks" }, [
         ranked("Most played demos", stats.top_demos, "No plays recorded yet."),
         ranked("Store click-throughs", stats.top_outbound, "No click-throughs yet.")
+      ]),
+      h("h4", { class: "adm-chart-title" }, ["Audience"]),
+      h("div", { class: "adm-ranks adm-ranks-3" }, [
+        ranked("Countries", (stats.countries || []).map(function (r) {
+          return { label: countryName(r.label), n: r.n };
+        }), "No visits recorded yet."),
+        ranked("Devices", stats.devices, "No visits recorded yet."),
+        ranked("Operating systems", stats.systems, "No visits recorded yet.")
+      ]),
+      h("p", { class: "adm-note" }, [
+        "Audience figures count visitors, not views — one person reloading ten " +
+        "times is a single visitor. “Unknown” covers visits recorded before this " +
+        "was added, or where the country could not be determined."
       ]),
       h("button", {
         class: "adm-mini",

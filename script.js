@@ -80,7 +80,10 @@
     return m + ":" + (s < 10 ? "0" : "") + s;
   }
 
-  document.querySelectorAll(".player").forEach(function (p) {
+  function initPlayers(root) {
+    (root || document).querySelectorAll(".player").forEach(function (p) {
+    if (p.dataset.ready) return;   /* content.js may re-render these */
+    p.dataset.ready = "1";
     var src = p.getAttribute("data-src");
     var audio = new Audio();
     audio.preload = "metadata";
@@ -144,5 +147,11 @@
       if (e.key === "ArrowRight") { audio.currentTime = Math.min(audio.currentTime + 5, audio.duration); e.preventDefault(); }
       if (e.key === "ArrowLeft") { audio.currentTime = Math.max(audio.currentTime - 5, 0); e.preventDefault(); }
     });
-  });
+    });
+  }
+
+  initPlayers(document);
+
+  /* ---- surface for content.js and admin.js ---- */
+  window.LB = { initPlayers: initPlayers };
 })();

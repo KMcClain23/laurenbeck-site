@@ -84,7 +84,7 @@ section{padding:clamp(3.5rem,8vw,6.5rem) 0}
 .hero .tagline{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.8vw,1.85rem);color:var(--rosewine);margin:0 0 1.8rem;line-height:1.35}
 .hero-cta{display:flex;gap:.9rem;flex-wrap:wrap}
 .hero-figure{position:relative;justify-self:center}
-.hero-figure img{border-radius:calc(var(--radius) + 8px);box-shadow:var(--shadow);width:min(420px,80vw)}
+.hero-figure img{border-radius:calc(var(--radius) + 8px);box-shadow:var(--shadow);width:min(420px,80vw);height:auto}
 .hero-figure::after{content:"";position:absolute;inset:auto -18px -18px auto;width:70%;height:70%;border:1px solid var(--gold);border-radius:calc(var(--radius) + 8px);z-index:-1}
 
 /* Specialties -------------------------------------------------------- */

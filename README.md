@@ -35,9 +35,20 @@ Everything in `assets/` right now is a **placeholder** so the site previews corr
 | `lauren-hero.png` | Large hero portrait |
 | `lauren-round.png` | Round "About" photo |
 | `lb-round.png` | Favicon / small logo mark |
-| `cover-babalon.png` | Release cover — *Babalon* |
-| `cover-seal-the-deal.png` | Release cover — *Seal the Deal* |
-| `cover-2.png` | Third release cover |
+
+**Cover art** (`assets/img/covers/`):
+
+| File | Used for |
+|------|----------|
+| `a-little-crush.jpg`, `fall-to-me.jpg`, `never-stop.jpg`, `chokehold.jpg`, `fated-to-the-phantom.jpg`, `fairy-wings.jpg`, `seal-the-deal.jpg`, `the-rebound-plan.jpg`, `to-find-a-king.jpg`, `santa-promised.jpg`, `babalon.jpg`, `claimed-by-the-creature.jpg` | Selected Work grid — square (1:1) audiobook covers, 600px |
+| `over-the-line.jpg`, `house-of-byrne.jpg`, `moniker.jpg` | Releases grid — portrait (2:3) covers |
+
+> The two grids use different aspect ratios on purpose: Selected Work is square
+> audiobook art, Releases is 2:3 book art. Match the ratio when swapping a file in,
+> or the cover will be cropped.
+
+The older `cover-babalon.png`, `cover-seal-the-deal.png`, and `cover-2.png` are no
+longer referenced and can be deleted.
 
 > The original full-resolution images currently live on the Squarespace CDN under
 > `https://images.squarespace-cdn.com/content/v1/68605d1d67b18167731b5935/…`

@@ -148,7 +148,11 @@
     return h("div", { class: "adm-login" }, [
       h("h2", {}, ["Site admin"]),
       h("p", { class: "adm-note" }, ["Signed-in access is required to change anything."]),
-      email, pass, err, btn
+      email, pass, err, btn,
+      /* Without this a stray triple-click would be a dead end: the backdrop and
+         Escape no longer dismiss, and the panel's Close button only exists once
+         signed in. */
+      h("button", { class: "adm-mini adm-cancel", onclick: close }, ["Cancel"])
     ]);
   }
 
@@ -480,7 +484,9 @@
 
   function open() {
     if (overlay) return;
-    overlay = h("div", { class: "adm-overlay", onclick: function (e) { if (e.target === overlay) close(); } });
+    /* No backdrop-click dismissal: a stray click outside the sheet used to
+       discard unsaved edits with no warning. Close is the only way out. */
+    overlay = h("div", { class: "adm-overlay" });
     document.body.appendChild(overlay);
     document.body.style.overflow = "hidden";
     try { token = sessionStorage.getItem(TOKEN_KEY); } catch (e) { token = null; }
@@ -495,5 +501,6 @@
     document.body.style.overflow = "";
   }
 
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+  /* Escape is deliberately not wired to close either — same reasoning as the
+     backdrop. Deliberate exit only. */
 })();

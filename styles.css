@@ -102,6 +102,8 @@ section{padding:clamp(3.5rem,8vw,6.5rem) 0}
 .sample:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
 .sample .genre{font-family:var(--serif);font-size:1.5rem;color:var(--teal);margin-bottom:.15rem}
 .sample .tags{font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--magenta);margin-bottom:1.1rem}
+.sample .source{font-size:.78rem;color:var(--muted);margin:.95rem 0 0}
+.sample .source cite{font-style:italic;color:var(--teal)}
 .player{display:flex;align-items:center;gap:.85rem}
 .player button.play{
   flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;

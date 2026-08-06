@@ -115,16 +115,16 @@
   /* ------------------------------------------------------------- fields */
   var FIELDS = {
     demos: [
-      { k: "genre", label: "Genre heading", ph: "RomCom" },
-      { k: "tags", label: "Tags line", ph: "1st POV · Dual · Banter" },
-      { k: "source_title", label: "From book (optional)", ph: "Make the Play" },
-      { k: "source_author", label: "By author (optional)", ph: "Hailey Rodger" }
+      { k: "genre", label: "Genre heading", ph: "e.g. RomCom" },
+      { k: "tags", label: "Tags line", ph: "e.g. 1st POV · Dual · Banter" },
+      { k: "source_title", label: "From book (optional)", ph: "leave blank for no credit" },
+      { k: "source_author", label: "By author (optional)", ph: "leave blank for no credit" }
     ],
     releases: [
-      { k: "title", label: "Title", ph: "Over the Line" },
-      { k: "author", label: "Author", ph: "Hailey Rodger" },
-      { k: "meta", label: "Series or genre", ph: "Colorado Storm, Book 4" },
-      { k: "badge", label: "Badge text", ph: "Coming Soon" }
+      { k: "title", label: "Title", ph: "e.g. Over the Line" },
+      { k: "author", label: "Author", ph: "e.g. Hailey Rodger" },
+      { k: "meta", label: "Series or genre", ph: "e.g. Colorado Storm, Book 4" },
+      { k: "badge", label: "Badge text", ph: "e.g. Coming Soon" }
     ]
   };
 
@@ -272,28 +272,196 @@
     render();
   }
 
-  function panelView() {
-    var list = cache[tab];
-    var tabs = ["demos", "releases"].map(function (k) {
-      return h("button", {
-        class: "adm-tab" + (tab === k ? " on" : ""),
-        onclick: function () { tab = k; render(); }
-      }, [k === "demos" ? "Demos" : "Releases"]);
+  /* ---------------------------------------------------------- analytics */
+  var stats = null, statsDays = 30, statsBusy = false;
+
+  function loadStats(days) {
+    statsDays = days || statsDays;
+    statsBusy = true;
+    render();
+    return rest("POST", "rpc/analytics_summary", { days: statsDays })
+      .then(function (d) { stats = d; statsBusy = false; render(); })
+      .catch(function (e) { statsBusy = false; stats = { error: e.message }; render(); });
+  }
+
+  function nice(n) { return (n || 0).toLocaleString(); }
+
+  /* Bars are a single series, so one hue carries all of them and no legend is
+     needed — the heading names the measure. Only the top corners are rounded so
+     each bar stays anchored to the baseline. */
+  function barChart(daily) {
+    var W = 720, H = 190, PAD_L = 34, PAD_B = 22, PAD_T = 8;
+    var max = Math.max.apply(null, daily.map(function (d) { return d.views; }).concat([1]));
+    var step = Math.pow(10, Math.floor(Math.log10(max))) || 1;
+    var top = Math.ceil(max / step) * step;
+    var plotW = W - PAD_L, plotH = H - PAD_B - PAD_T;
+    var slot = plotW / daily.length;
+    var bw = Math.max(1, slot - 2);          /* 2px surface gap between bars */
+    var ns = "http://www.w3.org/2000/svg";
+
+    function el(t, a, kids) {
+      var n = document.createElementNS(ns, t);
+      Object.keys(a || {}).forEach(function (k) { n.setAttribute(k, a[k]); });
+      (kids || []).forEach(function (c) { n.appendChild(c); });
+      return n;
+    }
+
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "adm-chart", role: "img",
+      "aria-label": "Daily page views over the last " + statsDays + " days" });
+
+    [0, 0.5, 1].forEach(function (f) {
+      var y = PAD_T + plotH - f * plotH;
+      svg.appendChild(el("line", { x1: PAD_L, x2: W, y1: y, y2: y, class: "adm-grid-line" }));
+      var t = el("text", { x: 0, y: y + 4, class: "adm-axis" });
+      t.textContent = nice(Math.round(top * f));
+      svg.appendChild(t);
     });
+
+    daily.forEach(function (d, i) {
+      var hgt = top ? (d.views / top) * plotH : 0;
+      var x = PAD_L + i * slot, y = PAD_T + plotH - hgt;
+      var r = Math.min(4, bw / 2, hgt);
+      var path = hgt > 0
+        ? "M" + x + "," + (y + r) + "a" + r + "," + r + " 0 0 1 " + r + "," + (-r) +
+          "h" + (bw - 2 * r) + "a" + r + "," + r + " 0 0 1 " + r + "," + r +
+          "v" + (hgt - r) + "h" + (-bw) + "z"
+        : "M" + x + "," + (PAD_T + plotH) + "h" + bw;
+      var bar = el("path", { d: path, class: "adm-bar" });
+      var tip = el("title");
+      tip.textContent = d.date + " — " + nice(d.views) + " views, " + nice(d.visitors) + " visitors";
+      bar.appendChild(tip);
+      svg.appendChild(bar);
+    });
+
+    [0, daily.length - 1].forEach(function (i) {
+      if (i < 0 || !daily[i]) return;
+      var t = el("text", { x: PAD_L + i * slot + bw / 2, y: H - 6,
+        class: "adm-axis", "text-anchor": i === 0 ? "start" : "end" });
+      t.textContent = String(daily[i].date).slice(5);
+      svg.appendChild(t);
+    });
+
+    return svg;
+  }
+
+  function ranked(title, rows, empty) {
+    if (!rows || !rows.length) return h("div", { class: "adm-rank" }, [
+      h("h4", {}, [title]), h("p", { class: "adm-note" }, [empty])
+    ]);
+    var max = Math.max.apply(null, rows.map(function (r) { return r.n; }));
+    return h("div", { class: "adm-rank" }, [
+      h("h4", {}, [title]),
+      h("div", {}, rows.map(function (r) {
+        var bar = h("span", { class: "adm-rank-fill" });
+        bar.style.width = Math.max(2, (r.n / max) * 100) + "%";
+        return h("div", { class: "adm-rank-row" }, [
+          h("span", { class: "adm-rank-label" }, [r.label]),
+          h("span", { class: "adm-rank-track" }, [bar]),
+          h("span", { class: "adm-rank-n" }, [nice(r.n)])
+        ]);
+      }))
+    ]);
+  }
+
+  function tile(label, value, hint) {
+    return h("div", { class: "adm-tile" }, [
+      h("span", { class: "adm-tile-label" }, [label]),
+      h("strong", { class: "adm-tile-value" }, [value]),
+      hint ? h("span", { class: "adm-tile-hint" }, [hint]) : null
+    ]);
+  }
+
+  function analyticsView() {
+    if (stats && stats.error) return h("p", { class: "adm-err" }, [stats.error]);
+    if (statsBusy || !stats) return h("p", { class: "adm-note" }, ["Loading…"]);
+
+    var t = stats.totals || {};
+    var m = stats.month || {};
+    var pace = m.day_of_month ? (m.views / m.day_of_month) * m.days_in_month : 0;
+
+    var ranges = [7, 30, 90].map(function (d) {
+      return h("button", {
+        class: "adm-tab" + (statsDays === d ? " on" : ""),
+        onclick: function () { loadStats(d); }
+      }, ["Last " + d + " days"]);
+    });
+
+    var table = h("table", { class: "adm-table", hidden: "" }, [
+      h("thead", {}, [h("tr", {}, [h("th", {}, ["Date"]), h("th", {}, ["Views"]), h("th", {}, ["Visitors"])])]),
+      h("tbody", {}, (stats.daily || []).map(function (d) {
+        return h("tr", {}, [h("td", {}, [d.date]), h("td", {}, [nice(d.views)]), h("td", {}, [nice(d.visitors)])]);
+      }))
+    ]);
+
+    return h("div", {}, [
+      h("div", { class: "adm-tabs adm-ranges" }, ranges),
+      h("div", { class: "adm-tiles" }, [
+        tile("Visitors", nice(t.visitors), "unique sessions"),
+        tile("Page views", nice(t.views), "last " + statsDays + " days"),
+        tile("Demo plays", nice(t.plays), "sample presses"),
+        tile("Audible clicks", nice(t.outbound), "left for a store")
+      ]),
+      h("h4", { class: "adm-chart-title" }, ["Page views per day"]),
+      barChart(stats.daily || []),
+      h("div", { class: "adm-tiles" }, [
+        tile("This month so far", nice(m.views),
+          "day " + m.day_of_month + " of " + m.days_in_month),
+        tile("Projected month end", nice(Math.round(pace)),
+          "estimate — current pace held flat")
+      ]),
+      h("p", { class: "adm-note" }, [
+        "The projection is arithmetic, not a forecast: views so far divided by days elapsed, " +
+        "multiplied out to the full month. Early in a month it swings wildly."
+      ]),
+      h("div", { class: "adm-ranks" }, [
+        ranked("Most played demos", stats.top_demos, "No plays recorded yet."),
+        ranked("Store click-throughs", stats.top_outbound, "No click-throughs yet.")
+      ]),
+      h("button", {
+        class: "adm-mini",
+        onclick: function (e) {
+          table.hidden = !table.hidden;
+          e.target.textContent = table.hidden ? "Show data table" : "Hide data table";
+        }
+      }, ["Show data table"]),
+      table
+    ]);
+  }
+
+  /* -------------------------------------------------------------- panel */
+  var TABS = [["demos", "Demos"], ["releases", "Releases"], ["analytics", "Analytics"]];
+
+  function panelView() {
+    var tabs = TABS.map(function (k) {
+      return h("button", {
+        class: "adm-tab" + (tab === k[0] ? " on" : ""),
+        onclick: function () {
+          tab = k[0];
+          if (tab === "analytics" && !stats) { loadStats(statsDays); return; }
+          render();
+        }
+      }, [k[1]]);
+    });
+
+    var body = tab === "analytics"
+      ? analyticsView()
+      : h("div", {}, [
+          h("p", { class: "adm-note" }, [
+            "New entries start hidden. Tick “Visible on site” and press Save when ready."
+          ]),
+          h("div", {}, cache[tab].map(function (item, i) { return row(tab, item, i, cache[tab]); }))
+        ]);
 
     return h("div", { class: "adm-panel" }, [
       h("div", { class: "adm-head" }, [
         h("div", { class: "adm-tabs" }, tabs),
         h("div", {}, [
-          h("button", { class: "adm-mini", onclick: function () { add(tab); } }, ["+ Add"]),
+          tab === "analytics" ? null : h("button", { class: "adm-mini", onclick: function () { add(tab); } }, ["+ Add"]),
           h("button", { class: "adm-mini", onclick: signOut }, ["Sign out"]),
           h("button", { class: "adm-mini", onclick: close }, ["Close"])
         ])
       ]),
-      h("p", { class: "adm-note" }, [
-        "New entries start hidden. Tick “Visible on site” and press Save when ready."
-      ]),
-      h("div", {}, list.map(function (item, i) { return row(tab, item, i, list); }))
+      body
     ]);
   }
 

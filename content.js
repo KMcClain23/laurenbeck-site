@@ -91,4 +91,53 @@
   query("releases?select=*&active=eq.true&order=sort_order.asc").then(renderReleases).catch(noop);
 
   function noop() { /* keep the hardcoded fallback on screen */ }
+
+  /* ------------------------------------------------------------ tracking
+     Records three things and nothing else. No cookie, no IP, no user agent.
+     The session id is random, lives in sessionStorage, and dies with the tab,
+     which separates visits from views without identifying anyone. */
+  var session = (function () {
+    try {
+      var s = sessionStorage.getItem("lb_sid");
+      if (!s) {
+        s = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+        sessionStorage.setItem("lb_sid", s);
+      }
+      return s;
+    } catch (e) { return null; }
+  })();
+
+  function track(event, label) {
+    if (navigator.webdriver) return;           /* skip obvious automation */
+    try {
+      fetch(REST + "analytics_events", {
+        method: "POST",
+        headers: { apikey: cfg.key, Authorization: "Bearer " + cfg.key, "Content-Type": "application/json" },
+        body: JSON.stringify({ event: event, label: label || null, session_id: session }),
+        keepalive: true
+      }).catch(noop);
+    } catch (e) { /* analytics must never break the page */ }
+  }
+
+  track("pageview", location.pathname);
+
+  document.addEventListener("click", function (e) {
+    var play = e.target.closest(".player .play");
+    if (play) {
+      /* the button toggles, so read the resulting state rather than assuming */
+      setTimeout(function () {
+        var player = play.closest(".player");
+        if (!player || !player.classList.contains("playing")) return;
+        var card = player.closest(".sample");
+        var name = card && card.querySelector(".genre") ? card.querySelector(".genre").textContent.trim() : "unknown";
+        var tags = card && card.querySelector(".tags") ? card.querySelector(".tags").textContent.trim() : "";
+        track("demo_play", tags ? name + " — " + tags : name);
+      }, 0);
+      return;
+    }
+    var link = e.target.closest("a[href]");
+    if (link && /audible\.com|acx\.com/i.test(link.href)) {
+      track("outbound", /acx\.com/i.test(link.href) ? "ACX profile" : "Audible");
+    }
+  });
 })();

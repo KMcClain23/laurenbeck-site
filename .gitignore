@@ -1,0 +1,22 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Vercel
+.vercel
+
+# Node (not used by this static site, but just in case)
+node_modules/
+
+# Original high-res source images kept locally but NOT used by the built site
+# (the optimized versions the site actually loads are committed separately).
+# Delete these lines if you'd rather keep the originals in the repo.
+assets/img/Profile Photo.jpeg
+assets/img/Serious.jpeg
+assets/img/Stand Teal.jpeg
+assets/img/lauren-about.jpeg
+assets/img/Lauren.png
+assets/img/Lauren_Long.png
+assets/img/Lauren_Simple.png
+assets/img/Lauren_Round.png

@@ -309,11 +309,18 @@
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "adm-chart", role: "img",
       "aria-label": "Daily page views over the last " + statsDays + " days" });
 
+    /* Deduped: at low traffic the midpoint rounds onto the top tick and the
+       axis would otherwise read 1, 1, 0. */
+    var ticks = [];
     [0, 0.5, 1].forEach(function (f) {
-      var y = PAD_T + plotH - f * plotH;
+      var v = Math.round(top * f);
+      if (ticks.indexOf(v) === -1) ticks.push(v);
+    });
+    ticks.forEach(function (v) {
+      var y = PAD_T + plotH - (top ? v / top : 0) * plotH;
       svg.appendChild(el("line", { x1: PAD_L, x2: W, y1: y, y2: y, class: "adm-grid-line" }));
       var t = el("text", { x: 0, y: y + 4, class: "adm-axis" });
-      t.textContent = nice(Math.round(top * f));
+      t.textContent = nice(v);
       svg.appendChild(t);
     });
 

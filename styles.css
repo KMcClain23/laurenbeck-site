@@ -281,7 +281,9 @@ section{padding:clamp(3.5rem,8vw,6.5rem) 0}
 .adm-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.2rem}
 .adm-tile{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.15rem}
 .adm-tile-label{font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.adm-tile-value{font-family:var(--serif);font-size:2rem;line-height:1.1;color:var(--teal);font-weight:600}
+/* Sans, not the display serif: Cormorant uses old-style figures, where 1 reads
+   as a small-cap I and 0 as an O. Unacceptable for numbers meant to be read. */
+.adm-tile-value{font-family:var(--sans);font-size:1.9rem;line-height:1.15;color:var(--teal);font-weight:500;font-variant-numeric:lining-nums tabular-nums}
 .adm-tile-hint{font-size:.7rem;color:var(--muted)}
 .adm-chart-title{font-family:var(--sans);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:.2rem 0 .5rem}
 .adm-chart{width:100%;height:auto;display:block;margin-bottom:1.2rem;overflow:visible}

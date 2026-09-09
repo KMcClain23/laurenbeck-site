@@ -150,11 +150,21 @@ section{padding:clamp(3.5rem,8vw,6.5rem) 0}
 .work-card .meta{font-size:.75rem;letter-spacing:.04em;color:var(--muted);opacity:.8;margin:.15rem 0 0}
 .work-more{text-align:center;margin:2.6rem 0 0}
 .work-card .grammy-badge{
-  position:absolute;top:0;left:0;right:0;z-index:2;
-  background:var(--gold);color:var(--teal-deep);
-  font-family:var(--sans);font-size:.6rem;font-weight:700;
-  letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:.4rem .3rem;
+  position:absolute;top:0;left:0;right:0;z-index:2;overflow:hidden;
+  background:linear-gradient(100deg,#a9833f 0%,#e6cd93 40%,#f7ecc9 50%,#e6cd93 60%,#a9833f 100%);
+  color:var(--teal-deep);
+  font-family:var(--sans);font-size:.62rem;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;text-align:center;padding:.44rem .3rem;
+  box-shadow:0 3px 10px -3px rgba(18,58,53,.55);
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
 }
+.work-card .grammy-badge::after{
+  content:"";position:absolute;top:0;bottom:0;left:-45%;width:38%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.8),transparent);
+  transform:skewX(-20deg);animation:grammyShine 3.6s ease-in-out infinite;
+}
+@keyframes grammyShine{0%{left:-45%}55%{left:118%}100%{left:118%}}
+@media (prefers-reduced-motion:reduce){.work-card .grammy-badge::after{animation:none;opacity:0}}
 
 /* Rosters ------------------------------------------------------------ */
 .rosters{text-align:center}

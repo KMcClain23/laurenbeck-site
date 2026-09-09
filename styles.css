@@ -170,6 +170,7 @@ section{padding:clamp(3.5rem,8vw,6.5rem) 0}
 .rosters{text-align:center}
 .rosters h2{font-size:clamp(1.8rem,4vw,2.6rem);color:var(--teal);margin-bottom:1.4rem}
 .roster-list{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:1.6rem 3rem}
+.roster-list a{display:inline-flex}
 .roster-list img{height:clamp(52px,7vw,74px);width:auto;opacity:.92;transition:opacity .25s ease,transform .25s ease}
 .roster-list img:hover{opacity:1;transform:translateY(-2px)}
 

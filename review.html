@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share a Review | Lauren Beck, Audiobook Narrator</title>
+<meta name="description" content="Share a review about working with audiobook narrator Lauren Beck. Submissions are reviewed before they appear on the site.">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#1e5049">
+<link rel="canonical" href="https://www.laurenbeckvoice.com/review">
+<link rel="icon" href="assets/img/favicon.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="testimonial-page">
+<header class="site-header">
+  <div class="container nav-wrap">
+    <a class="brand" href="index.html" aria-label="Lauren Beck, Narrator — home">
+      <span class="name">Lauren Beck</span>
+      <span class="role">Narrator</span>
+    </a>
+    <a class="btn btn-ghost" href="index.html#testimonials">Back to Lauren's site</a>
+  </div>
+</header>
+
+<main>
+  <section class="testimonial-page-section">
+    <div class="container">
+      <form id="testimonial-form" class="testimonial-form">
+        <div>
+          <p class="eyebrow">Kind Words</p>
+          <h1>Share a review</h1>
+          <p>Authors and narrators who have worked with Lauren are invited to share their experience. Your review will be sent to Lauren for approval before it appears on her site.</p>
+        </div>
+        <label>
+          <span>Your name</span>
+          <input name="display_name" type="text" maxlength="120" autocomplete="name" required>
+        </label>
+        <label>
+          <span>You are an</span>
+          <select name="role" required>
+            <option value="author">Author</option>
+            <option value="narrator">Narrator</option>
+          </select>
+        </label>
+        <label class="testimonial-project">
+          <span>Book or project (optional)</span>
+          <input name="project" type="text" maxlength="180">
+        </label>
+        <label class="testimonial-quote">
+          <span>Your review</span>
+          <textarea name="quote" rows="6" minlength="30" maxlength="5000" required></textarea>
+        </label>
+        <label class="testimonial-consent">
+          <input name="consent" type="checkbox" required>
+          <span>I confirm I have permission to share this review and allow Lauren to publish it if approved.</span>
+        </label>
+        <div class="testimonial-trap" aria-hidden="true">
+          <label>Leave this field empty<input name="website" type="text" tabindex="-1" autocomplete="off"></label>
+        </div>
+        <button class="btn btn-primary" type="submit">Send for approval</button>
+        <p class="testimonial-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <a class="name" href="index.html">Lauren Beck</a>
+    <p>Audiobook Narrator · Louisiana, USA</p>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="content.js"></script>
+</body>
+</html>

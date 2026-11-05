@@ -47,25 +47,25 @@
   }
 
   /* ---- expandable testimonials ---- */
-  document.querySelectorAll(".quote-toggle").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var q = btn.closest(".quote");
-      var short = q.querySelector(".quote-short");
-      var full = q.querySelector(".quote-full");
-      var label = btn.querySelector(".label");
-      var expanded = btn.getAttribute("aria-expanded") === "true";
-      if (expanded) {
-        full.hidden = true;
-        short.hidden = false;
-        btn.setAttribute("aria-expanded", "false");
-        if (label) label.textContent = "Read full testimony";
-      } else {
-        short.hidden = true;
-        full.hidden = false;
-        btn.setAttribute("aria-expanded", "true");
-        if (label) label.textContent = "Show less";
-      }
-    });
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".quote-toggle");
+    if (!btn) return;
+    var q = btn.closest(".quote");
+    var short = q.querySelector(".quote-short");
+    var full = q.querySelector(".quote-full");
+    var label = btn.querySelector(".label");
+    var expanded = btn.getAttribute("aria-expanded") === "true";
+    if (expanded) {
+      full.hidden = true;
+      short.hidden = false;
+      btn.setAttribute("aria-expanded", "false");
+      if (label) label.textContent = "Read full testimony";
+    } else {
+      short.hidden = true;
+      full.hidden = false;
+      btn.setAttribute("aria-expanded", "true");
+      if (label) label.textContent = "Show less";
+    }
   });
 
   /* ---- custom audio players ---- */

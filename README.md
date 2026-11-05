@@ -75,3 +75,6 @@ In the Vercel project → **Settings → Domains**, add `laurenbeckvoice.com` an
 
 ## Editing content
 All copy lives in `index.html` and is clearly sectioned with comments (`<!-- SAMPLES -->`, `<!-- ABOUT -->`, etc.). Colors and fonts are CSS variables at the top of `styles.css` — change them in one place to restyle the whole site.
+
+## Testimonial submissions
+Run `supabase/migrations/0003_testimonials.sql` in the Supabase SQL editor after the existing migrations. Authors and narrators can submit reviews at `https://www.laurenbeckvoice.com/review`; Lauren can share this direct link. Submissions are private by default; she can sign in to the site admin (triple-click the header logo) and approve or reject them in the **Reviews** tab. Only approved reviews appear publicly.

@@ -10,7 +10,15 @@
   "use strict";
 
   var cfg = window.LB_CONFIG;
-  if (!cfg || !cfg.key) return;
+  if (!cfg || !cfg.key) {
+    var reviewForm = document.getElementById("testimonial-form");
+    if (reviewForm) {
+      reviewForm.querySelector('button[type="submit"]').disabled = true;
+      reviewForm.querySelector(".testimonial-status").textContent =
+        "Review submissions are temporarily unavailable.";
+    }
+    return;
+  }
 
   var REST = cfg.url + "/rest/v1/";
   var PUBLIC = cfg.url + "/storage/v1/object/public/";
@@ -65,6 +73,16 @@
   }
 
   var BADGE = { soon: "badge soon", "new": "badge", production: "badge production" };
+  var AMAZON_COVER_OVERRIDES = {
+    "Blood and Bedlam": {
+      previous: "https://pwjdjrweyrnatqjtvbxd.supabase.co/storage/v1/object/public/covers/1793906476092-image-11-5-26-at-1.19-pm.jpeg",
+      amazon: "https://m.media-amazon.com/images/I/81S9BMAZYNL._SL1500_.jpg"
+    },
+    "Grin and Bear It": {
+      previous: "https://pwjdjrweyrnatqjtvbxd.supabase.co/storage/v1/object/public/covers/1793906564988-image-11-5-26-at-1.20-pm.jpeg",
+      amazon: "https://m.media-amazon.com/images/I/71YUIAkkdRL._SL1500_.jpg"
+    }
+  };
 
   function renderReleases(rows) {
     if (!rows.length) return;
@@ -75,10 +93,13 @@
       var badge = row.badge
         ? '<span class="' + (BADGE[row.badge_variant] || "badge") + '">' + esc(row.badge) + "</span>"
         : "";
+      var coverPath = row.cover_path;
+      var coverOverride = AMAZON_COVER_OVERRIDES[row.title];
+      if (coverOverride && coverPath === coverOverride.previous) coverPath = coverOverride.amazon;
       return '<article class="release reveal in">' +
         '<div class="cover">' + badge +
-          '<img src="' + esc(mediaUrl(row.cover_path, "covers", "assets/img/covers/", false)) +
-            '" alt="' + esc(row.title) + ' audiobook cover" width="800" height="1200" loading="lazy">' +
+          '<img src="' + esc(mediaUrl(coverPath, "covers", "assets/img/covers/", false)) +
+            '" alt="' + esc(row.title) + ' book cover" width="800" height="1200" loading="lazy">' +
         "</div>" +
         "<h3>" + esc(row.title) + "</h3>" +
         (row.author ? '<p class="author">' + esc(row.author) + "</p>" : "") +
@@ -87,8 +108,123 @@
     }).join("");
   }
 
-  query("demos?select=*&active=eq.true&order=sort_order.asc").then(renderDemos).catch(noop);
-  query("releases?select=*&active=eq.true&order=sort_order.asc").then(renderReleases).catch(noop);
+  function renderTestimonials(rows) {
+    var grid = document.querySelector(".quotes");
+    if (!grid || !rows.length) return;
+
+    rows.forEach(function (row) {
+      var quote = document.createElement("blockquote");
+      quote.className = "quote reveal in";
+
+      var short = document.createElement("div");
+      short.className = "quote-short";
+      var shortText = row.quote;
+      if (shortText.length > 260) {
+        var cut = shortText.lastIndexOf(" ", 260);
+        shortText = shortText.slice(0, cut > 180 ? cut : 260).trimEnd() + "…";
+      }
+      var shortP = document.createElement("p");
+      shortP.textContent = shortText;
+      short.appendChild(shortP);
+
+      var full = document.createElement("div");
+      full.className = "quote-full";
+      full.hidden = true;
+      var fullP = document.createElement("p");
+      fullP.textContent = row.quote;
+      full.appendChild(fullP);
+
+      quote.appendChild(short);
+      quote.appendChild(full);
+      if (row.quote.length > 260) {
+        var button = document.createElement("button");
+        button.className = "quote-toggle";
+        button.type = "button";
+        button.setAttribute("aria-expanded", "false");
+        var label = document.createElement("span");
+        label.className = "label";
+        label.textContent = "Read full testimony";
+        var chevron = document.createElement("span");
+        chevron.className = "chev";
+        chevron.setAttribute("aria-hidden", "true");
+        chevron.textContent = "▾";
+        button.appendChild(label);
+        button.appendChild(document.createTextNode(" "));
+        button.appendChild(chevron);
+        quote.appendChild(button);
+      }
+
+      var who = document.createElement("span");
+      who.className = "who";
+      who.textContent = row.display_name + ", " +
+        (row.role === "narrator" ? "Narrator" : "Author") +
+        (row.project ? " of " + row.project : "");
+      quote.appendChild(who);
+      grid.appendChild(quote);
+    });
+  }
+
+  function initTestimonialForm() {
+    var form = document.getElementById("testimonial-form");
+    if (!form) return;
+    var status = form.querySelector(".testimonial-status");
+    var submit = form.querySelector('button[type="submit"]');
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var data = new FormData(form);
+      if (data.get("website")) return;
+      status.textContent = "";
+      status.classList.remove("error");
+      submit.disabled = true;
+
+      var row = {
+        display_name: String(data.get("display_name") || "").trim(),
+        role: String(data.get("role") || ""),
+        project: String(data.get("project") || "").trim() || null,
+        quote: String(data.get("quote") || "").trim(),
+        consent: data.get("consent") === "on",
+        status: "pending"
+      };
+
+      fetch(REST + "testimonials", {
+        method: "POST",
+        headers: {
+          apikey: cfg.key,
+          Authorization: "Bearer " + cfg.key,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal"
+        },
+        body: JSON.stringify(row)
+      }).then(function (response) {
+        if (!response.ok) {
+          return response.text().then(function (text) {
+            throw new Error(text || "Submission failed (" + response.status + ").");
+          });
+        }
+        form.reset();
+        status.textContent = "Thanks! Your review has been sent to Lauren for approval.";
+      }).catch(function (error) {
+        console.error("Review submission failed:", error);
+        status.classList.add("error");
+        status.textContent = "Sorry, your review couldn't be submitted right now. Please try again later.";
+      }).then(function () {
+        submit.disabled = false;
+      });
+    });
+  }
+
+  if (document.querySelector(".samples-grid")) {
+    query("demos?select=*&active=eq.true&order=sort_order.asc").then(renderDemos).catch(noop);
+  }
+  if (document.querySelector(".releases-grid")) {
+    query("releases?select=*&active=eq.true&order=sort_order.asc").then(renderReleases).catch(noop);
+  }
+  if (document.querySelector(".quotes")) {
+    query("testimonials?select=display_name,role,project,quote&status=eq.approved&order=created_at.desc")
+      .then(renderTestimonials).catch(noop);
+  }
+  initTestimonialForm();
 
   function noop() { /* keep the hardcoded fallback on screen */ }
 

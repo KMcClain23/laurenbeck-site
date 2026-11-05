@@ -21,7 +21,7 @@
   var token = null;
   var overlay = null;
   var tab = "demos";
-  var cache = { demos: [], releases: [] };
+  var cache = { demos: [], releases: [], testimonials: [], testimonialError: null };
 
   /* ------------------------------------------------------ triple click */
   var clicks = [];
@@ -97,7 +97,18 @@
     return Promise.all([
       rest("GET", "demos?select=*&order=sort_order.asc"),
       rest("GET", "releases?select=*&order=sort_order.asc")
-    ]).then(function (r) { cache.demos = r[0] || []; cache.releases = r[1] || []; });
+    ]).then(function (r) {
+      cache.demos = r[0] || [];
+      cache.releases = r[1] || [];
+      return rest("GET", "testimonials?select=*&order=created_at.desc")
+        .then(function (rows) {
+          cache.testimonials = rows || [];
+          cache.testimonialError = null;
+        })
+        .catch(function (e) {
+          cache.testimonialError = e.message;
+        });
+    });
   }
 
   function upload(bucket, file) {
@@ -274,6 +285,65 @@
       ? { genre: "New sample", tags: "", audio_path: "", sort_order: next, active: false }
       : { title: "New title", badge: "Coming Soon", badge_variant: "soon", cover_path: "", sort_order: next, active: false });
     render();
+  }
+
+  function moderationView() {
+    if (cache.testimonialError) {
+      return h("p", { class: "adm-err" }, ["Could not load reviews: " + cache.testimonialError]);
+    }
+    if (!cache.testimonials.length) {
+      return h("p", { class: "adm-note" }, ["No reviews have been submitted yet."]);
+    }
+
+    return h("div", {}, cache.testimonials.map(function (item) {
+      var details = [item.role, item.project].filter(Boolean).join(" · ");
+      var status = h("span", { class: "adm-review-status" }, [item.status]);
+      var actions = h("div", { class: "adm-actions" }, [
+        h("button", {
+          class: "adm-mini",
+          disabled: item.status === "approved" ? "" : null,
+          onclick: function () { setTestimonialStatus(item, "approved"); }
+        }, ["Approve"]),
+        h("button", {
+          class: "adm-mini",
+          disabled: item.status === "rejected" ? "" : null,
+          onclick: function () { setTestimonialStatus(item, "rejected"); }
+        }, ["Reject"]),
+        h("button", {
+          class: "adm-mini adm-del",
+          onclick: function () { removeTestimonial(item); }
+        }, ["Delete"])
+      ]);
+
+      return h("article", { class: "adm-review" }, [
+        h("div", { class: "adm-review-head" }, [
+          h("strong", {}, [item.display_name]),
+          status
+        ]),
+        details ? h("p", { class: "adm-note" }, [details]) : null,
+        h("blockquote", { class: "adm-review-quote" }, [item.quote]),
+        actions
+      ]);
+    }));
+  }
+
+  function setTestimonialStatus(item, status) {
+    rest("PATCH", "testimonials?id=eq." + item.id, { status: status })
+      .then(function () {
+        item.status = status;
+        render();
+      })
+      .catch(function (e) { alert(e.message); });
+  }
+
+  function removeTestimonial(item) {
+    if (!confirm("Delete this review? This cannot be undone.")) return;
+    rest("DELETE", "testimonials?id=eq." + item.id)
+      .then(function () {
+        cache.testimonials = cache.testimonials.filter(function (x) { return x !== item; });
+        render();
+      })
+      .catch(function (e) { alert(e.message); });
   }
 
   /* ---------------------------------------------------------- analytics */
@@ -465,7 +535,7 @@
   }
 
   /* -------------------------------------------------------------- panel */
-  var TABS = [["demos", "Demos"], ["releases", "Releases"], ["analytics", "Analytics"]];
+  var TABS = [["demos", "Demos"], ["releases", "Releases"], ["testimonials", "Reviews"], ["analytics", "Analytics"]];
 
   function panelView() {
     var tabs = TABS.map(function (k) {
@@ -481,6 +551,11 @@
 
     var body = tab === "analytics"
       ? analyticsView()
+      : tab === "testimonials"
+        ? h("div", {}, [
+            h("p", { class: "adm-note" }, ["Submitted reviews stay private until you approve them."]),
+            moderationView()
+          ])
       : h("div", {}, [
           h("p", { class: "adm-note" }, [
             "New entries start hidden. Tick “Visible on site” and press Save when ready."
@@ -492,7 +567,7 @@
       h("div", { class: "adm-head" }, [
         h("div", { class: "adm-tabs" }, tabs),
         h("div", {}, [
-          tab === "analytics" ? null : h("button", { class: "adm-mini", onclick: function () { add(tab); } }, ["+ Add"]),
+          tab === "analytics" || tab === "testimonials" ? null : h("button", { class: "adm-mini", onclick: function () { add(tab); } }, ["+ Add"]),
           h("button", { class: "adm-mini", onclick: signOut }, ["Sign out"]),
           h("button", { class: "adm-mini", onclick: close }, ["Close"])
         ])

@@ -170,9 +170,13 @@ section{padding:clamp(3.5rem,8vw,6.5rem) 0}
 .rosters{text-align:center}
 .rosters h2{font-size:clamp(1.8rem,4vw,2.6rem);color:var(--teal);margin-bottom:1.4rem}
 .roster-list{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:1.6rem 3rem}
-.roster-list a{display:inline-flex}
-.roster-list img{display:block;max-width:min(220px,30vw);height:clamp(52px,7vw,74px);width:auto;object-fit:contain;opacity:.92;transition:opacity .25s ease,transform .25s ease}
-.roster-list img:hover{opacity:1;transform:translateY(-2px)}
+.roster-list a{display:inline-flex;align-items:center;justify-content:center;min-height:82px;padding:.4rem .7rem;border-radius:10px}
+.roster-list .roster-podium{background:#16051f;padding:.8rem 1rem}
+.roster-list .roster-jmm{background:#101010;padding:.8rem 1rem}
+.roster-list .roster-high-gravity{background:#fff}
+.roster-list img{display:block;max-width:min(220px,30vw);max-height:74px;width:auto;height:auto;object-fit:contain;transition:transform .25s ease}
+.roster-list .roster-prh img{width:min(180px,30vw)}
+.roster-list img:hover{transform:translateY(-2px)}
 
 /* Releases ----------------------------------------------------------- */
 .releases-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem}
